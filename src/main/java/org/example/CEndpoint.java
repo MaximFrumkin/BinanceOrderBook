@@ -5,6 +5,9 @@ import org.json.JSONException;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.websocket.*;
 
 @ClientEndpoint
@@ -12,8 +15,8 @@ public class CEndpoint {
     Session depthStreamSession = null;
     private UpdateOrderDataInterface orderDataBid;
     private UpdateOrderDataInterface orderDataAsk;
-    private final ArrayList<String> earlyMessages = new ArrayList<>();
-    private boolean reSubscribeSoon = false;
+    private final List<String> earlyMessages = Collections.synchronizedList(new ArrayList<>());
+    private final AtomicBoolean reSubscribeSoon = new AtomicBoolean(false);
 
     //connect to the stream
     public CEndpoint(URI endpointURI) {
@@ -48,7 +51,7 @@ public class CEndpoint {
         if (this.orderDataBid != null && this.orderDataAsk != null) {
             this.orderDataBid.updateOrderData(message);
             this.orderDataAsk.updateOrderData(message);
-            if(reSubscribeSoon) {
+            if(reSubscribeSoon.get()) {
                 earlyMessages.add(message);
             }
         } else {
@@ -62,7 +65,7 @@ public class CEndpoint {
     }
     public void applyEarlyMessages() {
         try {
-            reSubscribeSoon = false;
+            reSubscribeSoon.set(false);
             for (String earlyMessage : earlyMessages) {
                 if (this.orderDataBid != null && this.orderDataAsk != null) {
                     this.orderDataBid.updateOrderData(earlyMessage);
@@ -76,6 +79,6 @@ public class CEndpoint {
         }
     }
     public void applyEarlyMessagesSoon() {
-        reSubscribeSoon = true;
+        reSubscribeSoon.set(true);
     }
 }
