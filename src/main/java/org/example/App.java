@@ -85,6 +85,12 @@ public class App {
         final int numLevels = sc.nextInt();
         Runnable reSubscribe = () -> {
             subscribe();
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                System.err.printf("InterruptedException: %s", e.getMessage());
+                throw new RuntimeException(e);
+            }
             applySnapshot();
         };
         Runnable printOrderBook = () -> {
