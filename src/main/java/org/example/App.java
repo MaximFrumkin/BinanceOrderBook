@@ -57,6 +57,8 @@ public class App {
             orderDataAsk = new OrderData(false, lastUpdateId);
             orderDataBid.applySnapshot(snapshot);
             orderDataAsk.applySnapshot(snapshot);
+            cEndpoint.assignOrderData(orderDataBid, orderDataAsk);
+            cEndpoint.applyEarlyMessages();
         } catch (JSONException e) {
             System.err.printf("JSONException: %s", e.getMessage());
             throw new RuntimeException(e);
@@ -66,7 +68,7 @@ public class App {
     //Subscribe to the ethbtc stream
     static void subscribe() {
         try {
-            cEndpoint = new CEndpoint(new URI("wss://stream.binance.com:9443/ws/ethbtc@depth"), orderDataBid, orderDataAsk);
+            cEndpoint = new CEndpoint(new URI("wss://stream.binance.com:9443/ws/ethbtc@depth"));
         } catch (URISyntaxException e) {
             System.err.printf("URISyntaxException: %s", e.getMessage());
         }
@@ -79,8 +81,8 @@ public class App {
         final int numLevels = sc.nextInt();
         Runnable reSubscribe = new Runnable() {
             public void run() {
-                applySnapshot();
                 subscribe();
+                applySnapshot();
             }
         };
         Runnable printOrderBook = new Runnable() {

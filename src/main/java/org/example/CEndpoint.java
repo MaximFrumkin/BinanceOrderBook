@@ -4,21 +4,22 @@ import org.json.JSONException;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import javax.websocket.*;
 
 @ClientEndpoint
 public class CEndpoint {
     Session depthStreamSession = null;
-    private final UpdateOrderDataInterface orderDataBid;
-    private final UpdateOrderDataInterface orderDataAsk;
+    private UpdateOrderDataInterface orderDataBid;
+    private UpdateOrderDataInterface orderDataAsk;
+    private final ArrayList<String> earlyMessages = new ArrayList<>();
+
 
     //connect to the stream
-    public CEndpoint(URI endpointURI, UpdateOrderDataInterface orderDataBid, UpdateOrderDataInterface orderDataAsk) {
+    public CEndpoint(URI endpointURI) {
         try {
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
             container.connectToServer(this, endpointURI);
-            this.orderDataBid = orderDataBid;
-            this.orderDataAsk = orderDataAsk;
         } catch (DeploymentException e) {
             System.err.printf("DeploymentException: %s", e.getMessage());
             throw new RuntimeException(e);
@@ -26,6 +27,10 @@ public class CEndpoint {
             System.err.printf("IOException: %s", e.getMessage());
             throw new RuntimeException(e);
         }
+    }
+    public void assignOrderData(UpdateOrderDataInterface orderDataBid, UpdateOrderDataInterface orderDataAsk){
+        this.orderDataBid = orderDataBid;
+        this.orderDataAsk = orderDataAsk;
     }
 
     public interface UpdateOrderDataInterface {
@@ -40,11 +45,11 @@ public class CEndpoint {
     //handle the event messages by updating the OrderData objects
     @OnMessage
     public void onMessage(String message) throws JSONException {
-        if (this.orderDataBid != null) {
+        if (this.orderDataBid != null && this.orderDataAsk != null) {
             this.orderDataBid.updateOrderData(message);
-        }
-        if (this.orderDataAsk != null) {
             this.orderDataAsk.updateOrderData(message);
+        } else {
+            earlyMessages.add(message);
         }
     }
 
@@ -52,5 +57,17 @@ public class CEndpoint {
     public void onClose(Session userSession, CloseReason reason) {
         this.depthStreamSession = null;
     }
-
+    public void applyEarlyMessages() {
+        try {
+            for (String earlyMessage : earlyMessages) {
+                if (this.orderDataBid != null && this.orderDataAsk != null) {
+                    this.orderDataBid.updateOrderData(earlyMessage);
+                    this.orderDataAsk.updateOrderData(earlyMessage);
+                }
+            }
+        } catch (JSONException e) {
+            System.err.printf("JSONException: %s", e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
 }
