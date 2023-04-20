@@ -7,23 +7,25 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class OrderData implements CEndpoint.UpdateOrderDataInterface {
-    //To represent the order book, I decided to use a tree of prices,
+    //To represent the order book, I decided to use a skip list of prices,
     //with a hashmap mapping prices to volume.
     //This is better than simply using a hashmap as I would have to perform a sort every time I print.
     //This is also better than using a treemap as the insertion and deletion of prices are still O(log(n)),
     //but the modification of volume for existing prices is O(1) as I am updating a hashmap.
     //For comparison, the treemap modification would be O(log(n)), so my approach is faster.
-    TreeSet<Float> priceTree;
-    HashMap<Float, Float> countMap;
+    ConcurrentSkipListSet<Float> priceTree;
+    ConcurrentHashMap<Float, Float> countMap;
     boolean isBid;
     int lastUpdateId;
     Iterator<Float> treeItr;
 
     OrderData(boolean isBid, int lastUpdateId) {
-        this.priceTree = new TreeSet<>();
-        this.countMap = new HashMap<>();
+        this.priceTree = new ConcurrentSkipListSet<>();
+        this.countMap = new ConcurrentHashMap<>();
         this.isBid = isBid;
         this.lastUpdateId = lastUpdateId;
     }
