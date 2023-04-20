@@ -105,8 +105,13 @@ public class OrderData implements CEndpoint.UpdateOrderDataInterface {
     }
 
     //Update the priceTree and countMap due to receiving an event from the stream
-    public void updateOrderData(String message) throws JSONException {
-        JSONObject messageObject = new JSONObject(message);
-        update(messageObject);
+    public void updateOrderData(String message) {
+        try {
+            JSONObject messageObject = new JSONObject(message);
+            update(messageObject);
+        } catch (JSONException e) {
+            System.err.printf("JSONException: %s", e.getMessage());
+            throw new RuntimeException(e);
+        }
     }
 }
