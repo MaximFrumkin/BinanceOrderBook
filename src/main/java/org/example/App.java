@@ -68,7 +68,11 @@ public class App {
     //Subscribe to the ethbtc stream
     static void subscribe() {
         try {
-            cEndpoint = new CEndpoint(new URI("wss://stream.binance.com:9443/ws/ethbtc@depth"));
+            if(cEndpoint != null){
+                cEndpoint = new CEndpoint(new URI("wss://stream.binance.com:9443/ws/ethbtc@depth"), cEndpoint.earlyMessages);
+            } else {
+                cEndpoint = new CEndpoint(new URI("wss://stream.binance.com:9443/ws/ethbtc@depth"), Collections.synchronizedList(new ArrayList<>()));
+            }
         } catch (URISyntaxException e) {
             System.err.printf("URISyntaxException: %s", e.getMessage());
         }

@@ -15,12 +15,13 @@ public class CEndpoint {
     Session depthStreamSession = null;
     private UpdateOrderDataInterface orderDataBid;
     private UpdateOrderDataInterface orderDataAsk;
-    private final List<String> earlyMessages = Collections.synchronizedList(new ArrayList<>());
+    final List<String> earlyMessages;
     private final AtomicBoolean reSubscribeSoon = new AtomicBoolean(false);
 
     //connect to the stream
-    public CEndpoint(URI endpointURI) {
+    public CEndpoint(URI endpointURI, List<String> earlyMessages) {
         try {
+            this.earlyMessages = earlyMessages;
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
             container.connectToServer(this, endpointURI);
         } catch (DeploymentException e) {
