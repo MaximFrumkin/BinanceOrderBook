@@ -65,6 +65,7 @@ public class CEndpoint {
                     this.orderDataAsk.updateOrderData(earlyMessage);
                 }
             }
+            earlyMessages.clear();
         } catch (JSONException e) {
             System.err.printf("JSONException: %s", e.getMessage());
             throw new RuntimeException(e);
