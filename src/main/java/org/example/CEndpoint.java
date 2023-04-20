@@ -13,7 +13,7 @@ public class CEndpoint {
     private UpdateOrderDataInterface orderDataBid;
     private UpdateOrderDataInterface orderDataAsk;
     private final ArrayList<String> earlyMessages = new ArrayList<>();
-
+    private boolean reSubscribeSoon = false;
 
     //connect to the stream
     public CEndpoint(URI endpointURI) {
@@ -48,6 +48,9 @@ public class CEndpoint {
         if (this.orderDataBid != null && this.orderDataAsk != null) {
             this.orderDataBid.updateOrderData(message);
             this.orderDataAsk.updateOrderData(message);
+            if(reSubscribeSoon) {
+                earlyMessages.add(message);
+            }
         } else {
             earlyMessages.add(message);
         }
@@ -59,6 +62,7 @@ public class CEndpoint {
     }
     public void applyEarlyMessages() {
         try {
+            reSubscribeSoon = false;
             for (String earlyMessage : earlyMessages) {
                 if (this.orderDataBid != null && this.orderDataAsk != null) {
                     this.orderDataBid.updateOrderData(earlyMessage);
@@ -70,5 +74,8 @@ public class CEndpoint {
             System.err.printf("JSONException: %s", e.getMessage());
             throw new RuntimeException(e);
         }
+    }
+    public void applyEarlyMessagesSoon() {
+        reSubscribeSoon = true;
     }
 }

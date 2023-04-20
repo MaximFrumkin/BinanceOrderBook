@@ -79,27 +79,28 @@ public class App {
         Scanner sc = new Scanner(System.in);
         System.out.println("Please Enter the Number of Levels:");
         final int numLevels = sc.nextInt();
-        Runnable reSubscribe = new Runnable() {
-            public void run() {
-                subscribe();
-                applySnapshot();
+        Runnable reSubscribe = () -> {
+            subscribe();
+            applySnapshot();
+        };
+        Runnable printOrderBook = () -> {
+            orderDataBid.prepForItr();
+            orderDataAsk.prepForItr();
+            System.out.printf("%-10s %10s \t %-10s %10s\n", "BID_SIZE", "BID_PRICE", "ASK_PRICE", "ASK_SIZE");
+            for (int i = 0; i < numLevels; i++) {
+                orderDataBid.print();
+                orderDataAsk.print();
             }
         };
-        Runnable printOrderBook = new Runnable() {
-            public void run() {
-                orderDataBid.prepForItr();
-                orderDataAsk.prepForItr();
-                System.out.printf("%-10s %10s \t %-10s %10s\n", "BID_SIZE", "BID_PRICE", "ASK_PRICE", "ASK_SIZE");
-                for (int i = 0; i < numLevels; i++) {
-                    orderDataBid.print();
-                    orderDataAsk.print();
-                }
-            }
-        };
+
+        Runnable reSubscribeSoon = () -> cEndpoint.applyEarlyMessagesSoon();
+
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
         //Binance only keeps streams open for 24 hours. To avoid this issue, every 12 hours I reopen the stream.
         executor.scheduleAtFixedRate(reSubscribe, 0, 12, TimeUnit.HOURS);
         //Every 10 seconds, print the order book.
         executor.scheduleAtFixedRate(printOrderBook, 0, 10, TimeUnit.SECONDS);
+        //1 minute before every reSubscribe, start collecting events
+        executor.scheduleAtFixedRate(reSubscribeSoon, (12*60)-1, 12*60, TimeUnit.MINUTES);
     }
 }
